@@ -1,0 +1,8 @@
+#!/bin/bash
+
+text="$*"
+line=$(printf '%*s' $((${#text} + 2)) '' | tr ' ' '-')
+
+printf '+%s+\n' "$line"
+printf '| %s |\n' "$text"
+printf '+%s+\n' "$line"
