@@ -1,0 +1,17 @@
+{
+  "type": "directory",
+  "children": {
+    "readme.txt": {
+      "type": "file",
+      "content_base64": "SGVsbG8gVkZTCg=="
+    },
+    "data.bin": {
+      "type": "file",
+      "content_base64": "AAEC/w=="
+    },
+    "notes.txt": {
+      "type": "file",
+      "content_base64": "Tm90ZXMK"
+    }
+  }
+}

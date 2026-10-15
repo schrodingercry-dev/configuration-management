@@ -1,0 +1,24 @@
+{
+  "type": "directory",
+  "children": {
+    "home": {
+      "type": "directory",
+      "children": {
+        "student": {
+          "type": "directory",
+          "children": {
+            "projects": {
+              "type": "directory",
+              "children": {
+                "task.txt": {
+                  "type": "file",
+                  "content_base64": "TGV2ZWwgNAo="
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
