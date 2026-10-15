@@ -62,9 +62,53 @@ def dump_config(args, config):
     return True
 
 
+def validate_node(node):
+    """Check the JSON VFS tree, including base64 file contents."""
+    if not isinstance(node, dict):
+        raise ValueError("VFS node must be a JSON object")
+    if node.get("type") == "directory":
+        validate_directory(node)
+    elif node.get("type") == "file":
+        validate_file(node)
+    else:
+        raise ValueError("Unknown VFS node type")
+
+
+def validate_directory(node):
+    """Validate a directory and all of its children recursively."""
+    children = node.get("children")
+    if not isinstance(children, dict):
+        raise ValueError("Directory requires a children object")
+    for name, child in children.items():
+        if not name or "/" in name or name in (".", ".."):
+            raise ValueError("Invalid VFS entry name")
+        validate_node(child)
+
+
+def validate_file(node):
+    """Check that a file contains valid base64-encoded bytes."""
+    encoded = node.get("content_base64")
+    if not isinstance(encoded, str):
+        raise ValueError("File requires content_base64 string")
+    try:
+        base64.b64decode(encoded, validate=True)
+    except (ValueError, binascii.Error) as error:
+        raise ValueError("Invalid base64 file content") from error
+
+
 def load_vfs(path):
-    """Defer loading VFS until stage 3."""
-    return {"type": "directory", "children": {}}
+    """Read a JSON VFS into memory without changing the source file."""
+    if not path:
+        return {"type": "directory", "children": {}}
+    try:
+        with open(path, encoding="utf-8") as source:
+            data = json.load(source)
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"Cannot load VFS: {error}") from error
+    validate_node(data)
+    if data["type"] != "directory":
+        raise ValueError("VFS root must be a directory")
+    return data
 
 
 def run_script(path, config, prompt):

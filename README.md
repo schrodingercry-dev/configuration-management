@@ -56,4 +56,24 @@ memory> exit
 - `scripts/test_stage*.sh` — тестовые вызовы на macOS/Linux.
 - `tests/` — автоматические тесты на `unittest`.
 
+## Этапы разработки
 
+1. `feat(repl): ...` — CLI, парсер, заглушки, `exit`.
+2. `feat(config): ...` — параметры запуска, скрипт, `conf-dump`.
+3. `feat(vfs): ...` — загрузка JSON VFS, base64, тесты.
+
+**Граница этапа 3:** команды `ls` и `cd` ещё не выполняют операции
+с виртуальными каталогами: по ТЗ это требуется на этапе 4.
+
+## Публикация
+
+Создайте на GitHub пустой репозиторий без README и `.gitignore`.
+Откройте эту папку в терминале и выполните:
+
+```bash
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+git push -u origin main
+```
+
+История: `git log --oneline --reverse`. Архив ZIP предназначен только
+для передачи проекта и не включается в репозиторий.
