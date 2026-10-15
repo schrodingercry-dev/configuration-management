@@ -1,4 +1,4 @@
-"""Minimal UNIX-like shell emulator for practical stages 1-3."""
+"""Эмулятор UNIX-подобной оболочки для первых трёх этапов практики."""
 import argparse
 import base64
 import binascii
@@ -13,9 +13,9 @@ VARIABLE = re.compile(r"\$(\w+|\{[^}]+\})")
 
 
 def expand_variables(line):
-    """Replace environment variables with values from the host OS."""
+    """Подставляет значения переменных окружения основной ОС."""
     def replace(match):
-        """Return the value of one referenced environment variable."""
+        """Возвращает значение найденной переменной окружения."""
         name = match.group(1).strip("{}")
         return os.environ.get(name, "")
 
@@ -23,12 +23,12 @@ def expand_variables(line):
 
 
 def parse_command(line):
-    """Split input into command and arguments after variable expansion."""
+    """Разделяет строку на команду и аргументы после подстановки переменных."""
     return shlex.split(expand_variables(line))
 
 
 def execute(line, config):
-    """Execute a supported command and return (success, should_exit)."""
+    """Выполняет команду и возвращает признаки успеха и завершения."""
     try:
         words = parse_command(line)
     except ValueError as error:
@@ -53,7 +53,7 @@ def execute(line, config):
 
 
 def dump_config(args, config):
-    """Display emulator settings in key-value format."""
+    """Выводит настройки эмулятора в формате ключ=значение."""
     if args:
         print("Error: conf-dump does not accept arguments")
         return False
@@ -63,7 +63,7 @@ def dump_config(args, config):
 
 
 def validate_node(node):
-    """Check the JSON VFS tree, including base64 file contents."""
+    """Проверяет узлы JSON-VFS, включая содержимое файлов в base64."""
     if not isinstance(node, dict):
         raise ValueError("VFS node must be a JSON object")
     if node.get("type") == "directory":
@@ -75,7 +75,7 @@ def validate_node(node):
 
 
 def validate_directory(node):
-    """Validate a directory and all of its children recursively."""
+    """Проверяет каталог и все вложенные элементы рекурсивно."""
     children = node.get("children")
     if not isinstance(children, dict):
         raise ValueError("Directory requires a children object")
@@ -86,7 +86,7 @@ def validate_directory(node):
 
 
 def validate_file(node):
-    """Check that a file contains valid base64-encoded bytes."""
+    """Проверяет корректность содержимого файла в формате base64."""
     encoded = node.get("content_base64")
     if not isinstance(encoded, str):
         raise ValueError("File requires content_base64 string")
@@ -97,7 +97,7 @@ def validate_file(node):
 
 
 def load_vfs(path):
-    """Read a JSON VFS into memory without changing the source file."""
+    """Загружает JSON-VFS в память, не изменяя исходный файл."""
     if not path:
         return {"type": "directory", "children": {}}
     try:
@@ -112,7 +112,7 @@ def load_vfs(path):
 
 
 def run_script(path, config, prompt):
-    """Echo and execute script commands, skipping invalid commands."""
+    """Показывает и выполняет команды скрипта, пропуская ошибки."""
     try:
         with open(path, encoding="utf-8") as source:
             commands = source.readlines()
@@ -130,7 +130,7 @@ def run_script(path, config, prompt):
 
 
 def repl(config, prompt):
-    """Read and execute commands until exit or end of input."""
+    """Читает и выполняет команды до выхода или завершения ввода."""
     while True:
         try:
             line = input(prompt)
@@ -143,7 +143,7 @@ def repl(config, prompt):
 
 
 def main(argv=None):
-    """Parse startup options, load VFS and start the emulator."""
+    """Разбирает параметры запуска, загружает VFS и запускает эмулятор."""
     parser = argparse.ArgumentParser(description="Variant 13 shell")
     parser.add_argument("--vfs", help="Path to a JSON VFS")
     parser.add_argument("--script", help="Path to startup commands")

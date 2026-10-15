@@ -1,4 +1,4 @@
-"""Tests for the first three stages of variant 13."""
+"""Тесты первых трёх этапов практической работы, вариант 13."""
 import os
 import subprocess
 import sys
@@ -14,35 +14,35 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class EmulatorTests(unittest.TestCase):
-    """Verify parser, commands, configuration and VFS loading."""
+    """Проверяет парсер, команды, настройки и загрузку VFS."""
 
     def test_environment_expansion(self):
-        """Expand a variable from the real environment."""
+        """Проверяет раскрытие переменной окружения основной ОС."""
         os.environ["CM_TEST_VAR"] = "/tmp/example"
         self.assertEqual(parse_command("ls $CM_TEST_VAR"),
                          ["ls", "/tmp/example"])
 
     def test_quoted_arguments(self):
-        """Preserve an argument containing spaces."""
+        """Проверяет сохранение аргумента с пробелами в кавычках."""
         self.assertEqual(parse_command('cd "two words"'),
                          ["cd", "two words"])
 
     def test_valid_vfs(self):
-        """Accept all three example VFS structures."""
+        """Проверяет загрузку трёх корректных примеров VFS."""
         for name in ("minimal", "several_files", "deep_tree"):
             with self.subTest(name=name):
                 node = load_vfs(ROOT / "vfs" / f"{name}.json")
                 self.assertEqual(node["type"], "directory")
 
     def test_invalid_vfs(self):
-        """Reject malformed and missing VFS files."""
+        """Проверяет отказ при повреждённом или отсутствующем файле VFS."""
         for name in ("invalid", "missing"):
             with self.subTest(name=name):
                 with self.assertRaises(ValueError):
                     load_vfs(ROOT / "vfs" / f"{name}.json")
 
     def test_commands(self):
-        """Check supported commands and error paths."""
+        """Проверяет поддерживаемые команды и обработку ошибок."""
         config = SimpleNamespace(vfs="test.json", script="test.txt")
         cases = (("ls /tmp", (True, False)),
                  ("cd x", (True, False)),
@@ -57,20 +57,20 @@ class EmulatorTests(unittest.TestCase):
                     self.assertEqual(execute(command, config), expected)
 
     def test_script_skips_errors(self):
-        """Continue running commands after an invalid script command."""
+        """Проверяет продолжение скрипта после ошибочной команды."""
         result = self.run_emulator("--script", "scripts/startup.txt")
         self.assertEqual(result.returncode, 0)
         self.assertIn("Unknown command: unknown-command", result.stdout)
         self.assertIn("Command: ls", result.stdout)
 
     def test_missing_script(self):
-        """Report an error and fail if a script does not exist."""
+        """Проверяет ошибку при отсутствии стартового скрипта."""
         result = self.run_emulator("--script", "missing.txt")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Startup error:", result.stderr)
 
     def test_conf_dump(self):
-        """Display the paths passed through CLI options."""
+        """Проверяет вывод путей, переданных через параметры CLI."""
         result = self.run_emulator("--vfs", "vfs/minimal.json",
                                    "--script", "scripts/startup.txt")
         self.assertIn("vfs_path=vfs/minimal.json", result.stdout)
@@ -78,7 +78,7 @@ class EmulatorTests(unittest.TestCase):
 
     @staticmethod
     def run_emulator(*args):
-        """Start the CLI as a subprocess with input ending in exit."""
+        """Запускает CLI в отдельном процессе с командой завершения."""
         return subprocess.run(
             [sys.executable, "-m", "src.emulator", *args],
             cwd=ROOT, input="exit\n", text=True,

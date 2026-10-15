@@ -1,1 +1,1 @@
-"""Automated tests for the shell emulator."""
+"""Автоматические тесты эмулятора оболочки."""
