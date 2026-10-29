@@ -64,12 +64,14 @@ class CliTests(unittest.TestCase):
                 "--test-mode",
                 "--version",
                 "1.0",
+                "--ascii-tree",
                 "--max-depth",
                 "2",
             )
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.splitlines(), ["1. B", "2. A"])
+        self.assertIn('"A" -> "B"', result.stdout)
+        self.assertIn("ASCII tree:\nA\n└── B", result.stdout)
 
     def test_rejects_missing_required_parameter(self) -> None:
         result = run_cli()

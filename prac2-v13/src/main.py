@@ -10,12 +10,11 @@ from urllib.parse import urlparse
 from .graph import (
     TEST_PACKAGE_RE,
     build_dependency_graph,
-    dependency_load_order,
-    format_load_order,
     parse_test_repository,
     records_to_repository,
 )
 from .repository import RepositoryError, find_package, load_index_for_package
+from .visualization import to_ascii_tree, to_d2
 
 
 PACKAGE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9+.-]*$")
@@ -138,7 +137,7 @@ def format_configuration(args: argparse.Namespace) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Вывести порядок загрузки зависимостей (этап 4)."""
+    """Вывести граф на D2 и, при запросе, как ASCII-дерево (этап 5)."""
     parser = build_parser()
     args = parser.parse_args(argv)
     validate_repository(parser, args.repository, args.test_mode)
@@ -158,7 +157,11 @@ def main(argv: list[str] | None = None) -> int:
     except RepositoryError as error:
         parser.error(str(error))
 
-    print(format_load_order(dependency_load_order(graph, args.package)))
+    print("D2:")
+    print(to_d2(graph))
+    if args.ascii_tree:
+        print("\nASCII tree:")
+        print(to_ascii_tree(graph, args.package))
     return 0
 
 
