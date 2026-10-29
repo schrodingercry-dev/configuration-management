@@ -7,6 +7,13 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+from .graph import (
+    TEST_PACKAGE_RE,
+    build_dependency_graph,
+    format_graph,
+    parse_test_repository,
+    records_to_repository,
+)
 from .repository import RepositoryError, find_package, load_index_for_package
 
 
@@ -16,12 +23,25 @@ PACKAGE_VERSION_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z.+:~\-]*$")
 
 def package_name(value: str) -> str:
     """Проверить имя пакета в формате Ubuntu/Debian."""
-    if not PACKAGE_NAME_RE.fullmatch(value):
+    if not (PACKAGE_NAME_RE.fullmatch(value) or TEST_PACKAGE_RE.fullmatch(value)):
         raise argparse.ArgumentTypeError(
             "имя пакета должно начинаться со строчной буквы или цифры "
             "и содержать только a-z, 0-9, '+', '-' и '.'"
         )
     return value
+
+
+def validate_package_for_mode(
+    parser: argparse.ArgumentParser, package: str, test_mode: bool
+) -> None:
+    """Проверить соглашение об имени для выбранного режима."""
+    expected = TEST_PACKAGE_RE if test_mode else PACKAGE_NAME_RE
+    if not expected.fullmatch(package):
+        parser.error(
+            "в тестовом режиме пакет задаётся большими латинскими буквами"
+            if test_mode
+            else "имя настоящего Ubuntu-пакета должно быть записано строчными буквами"
+        )
 
 
 def package_version(value: str) -> str:
@@ -117,26 +137,27 @@ def format_configuration(args: argparse.Namespace) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Получить и вывести прямые зависимости пакета (этап 2)."""
+    """Построить граф зависимостей рекурсивным DFS (этап 3)."""
     parser = build_parser()
     args = parser.parse_args(argv)
     validate_repository(parser, args.repository, args.test_mode)
-    if args.test_mode:
-        parser.error("тестовый репозиторий будет поддержан на этапе 3")
+    validate_package_for_mode(parser, args.package, args.test_mode)
     try:
-        records, source_url = load_index_for_package(
-            args.repository, args.package, args.version
-        )
-        package = find_package(records, args.package, args.version)
+        if args.test_mode:
+            repository = parse_test_repository(
+                Path(args.repository).read_text(encoding="utf-8")
+            )
+        else:
+            records, _ = load_index_for_package(
+                args.repository, args.package, args.version
+            )
+            find_package(records, args.package, args.version)
+            repository = records_to_repository(records, args.package, args.version)
+        graph = build_dependency_graph(repository, args.package, args.max_depth)
     except RepositoryError as error:
         parser.error(str(error))
 
-    print(f"source: {source_url}")
-    if package.dependencies:
-        for dependency in package.dependencies:
-            print(f"dependency: {dependency}")
-    else:
-        print("dependency: <none>")
+    print(format_graph(graph))
     return 0
 
 

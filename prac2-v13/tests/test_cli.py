@@ -52,22 +52,24 @@ class CliTests(unittest.TestCase):
             ],
         )
 
-    def test_stage2_reports_that_test_mode_belongs_to_stage3(self) -> None:
-        with tempfile.NamedTemporaryFile() as repository:
+    def test_runs_with_test_repository(self) -> None:
+        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as repository:
+            repository.write("A: B\nB:\n")
+            repository.flush()
             result = run_cli(
                 "--package",
-                "a",
+                "A",
                 "--repository",
                 repository.name,
                 "--test-mode",
                 "--version",
                 "1.0",
                 "--max-depth",
-                "0",
+                "2",
             )
 
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("этапе 3", result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.splitlines(), ["A: B", "B: <none>"])
 
     def test_rejects_missing_required_parameter(self) -> None:
         result = run_cli()
