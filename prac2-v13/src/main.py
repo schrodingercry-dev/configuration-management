@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 from .graph import (
     TEST_PACKAGE_RE,
     build_dependency_graph,
-    format_graph,
+    dependency_load_order,
+    format_load_order,
     parse_test_repository,
     records_to_repository,
 )
@@ -137,7 +138,7 @@ def format_configuration(args: argparse.Namespace) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Построить граф зависимостей рекурсивным DFS (этап 3)."""
+    """Вывести порядок загрузки зависимостей (этап 4)."""
     parser = build_parser()
     args = parser.parse_args(argv)
     validate_repository(parser, args.repository, args.test_mode)
@@ -157,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     except RepositoryError as error:
         parser.error(str(error))
 
-    print(format_graph(graph))
+    print(format_load_order(dependency_load_order(graph, args.package)))
     return 0
 
 

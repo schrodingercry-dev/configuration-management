@@ -69,7 +69,7 @@ class CliTests(unittest.TestCase):
             )
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.splitlines(), ["A: B", "B: <none>"])
+        self.assertEqual(result.stdout.splitlines(), ["1. B", "2. A"])
 
     def test_rejects_missing_required_parameter(self) -> None:
         result = run_cli()

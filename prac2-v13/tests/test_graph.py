@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import unittest
 
-from src.graph import build_dependency_graph, parse_test_repository
+from src.graph import (
+    build_dependency_graph,
+    dependency_load_order,
+    parse_test_repository,
+)
 from src.repository import RepositoryError
 
 
@@ -35,3 +39,15 @@ class GraphTests(unittest.TestCase):
         repository = parse_test_repository("A: B, C\nB: D\nC: D\nD:\n")
         graph = build_dependency_graph(repository, "A", 5)
         self.assertEqual(set(graph.adjacency), {"A", "B", "C", "D"})
+
+    def test_load_order_places_dependencies_before_package(self) -> None:
+        repository = parse_test_repository("A: B, C\nB: D\nC: D\nD:\n")
+        graph = build_dependency_graph(repository, "A", 5)
+        self.assertEqual(dependency_load_order(graph, "A"), ("D", "B", "C", "A"))
+
+    def test_load_order_handles_cycle_once(self) -> None:
+        repository = parse_test_repository("A: B\nB: C\nC: A\n")
+        graph = build_dependency_graph(repository, "A", 5)
+        order = dependency_load_order(graph, "A")
+        self.assertEqual(order, ("C", "B", "A"))
+        self.assertEqual(len(order), len(set(order)))

@@ -99,3 +99,30 @@ def format_graph(graph: DependencyGraph) -> str:
     for source, target in graph.cycles:
         lines.append(f"cycle: {source} -> {target}")
     return "\n".join(lines)
+
+
+def dependency_load_order(graph: DependencyGraph, root: str) -> tuple[str, ...]:
+    """Получить порядок «сначала зависимости» рекурсивным обходом графа."""
+    order: list[str] = []
+    visited: set[str] = set()
+    active: set[str] = set()
+
+    def visit(package: str) -> None:
+        if package in visited or package in active:
+            return
+        active.add(package)
+        for dependency in graph.adjacency.get(package, ()):
+            visit(dependency)
+        active.remove(package)
+        visited.add(package)
+        order.append(package)
+
+    visit(root)
+    return tuple(order)
+
+
+def format_load_order(order: tuple[str, ...]) -> str:
+    """Оформить порядок загрузки с номерами."""
+    return "\n".join(
+        f"{number}. {package}" for number, package in enumerate(order, start=1)
+    )
