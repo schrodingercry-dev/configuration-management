@@ -53,7 +53,10 @@ class CliTests(unittest.TestCase):
         )
 
     def test_runs_with_test_repository(self) -> None:
-        with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8") as repository:
+        with tempfile.NamedTemporaryFile(
+            mode="w+",
+            encoding="utf-8",
+        ) as repository:
             repository.write("A: B\nB:\n")
             repository.flush()
             result = run_cli(

@@ -31,7 +31,10 @@ class RepositoryTests(unittest.TestCase):
     def test_parses_control_stanzas_and_continuations(self) -> None:
         stanzas = parse_control_stanzas(PACKAGES_TEXT)
         self.assertEqual(len(stanzas), 2)
-        self.assertEqual(stanzas[0]["Description"], "first line continuation line")
+        self.assertEqual(
+            stanzas[0]["Description"],
+            "first line continuation line",
+        )
 
     def test_extracts_predepends_depends_and_first_alternative(self) -> None:
         records = parse_packages(PACKAGES_TEXT)

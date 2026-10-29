@@ -39,9 +39,12 @@ def candidate_urls(repository_url: str) -> tuple[str, ...]:
 
 
 def download_index(url: str) -> str:
-    """Скачать и распаковать Packages, используя только стандартную библиотеку."""
+    """Скачать и распаковать Packages.
+
+    Для загрузки используются только средства стандартной библиотеки.
+    """
     try:
-        with urlopen(url, timeout=30) as response:  # noqa: S310 - URL задан пользователем
+        with urlopen(url, timeout=30) as response:
             data = response.read()
     except (HTTPError, URLError, TimeoutError) as error:
         raise RepositoryError(f"не удалось загрузить {url}: {error}") from error
@@ -127,12 +130,20 @@ def load_index_for_package(
         except RepositoryError as error:
             errors.append(str(error))
             continue
-        if any(record.name == package and record.version == version for record in records):
+        package_found = any(
+            record.name == package and record.version == version
+            for record in records
+        )
+        if package_found:
             return records, url
 
     details = f" Последняя ошибка: {errors[-1]}" if errors else ""
+    message = (
+        f"пакет {package} версии {version} не найден "
+        f"в указанных индексах.{details}"
+    )
     raise RepositoryError(
-        f"пакет {package} версии {version} не найден в указанных индексах.{details}"
+        message
     )
 
 

@@ -35,10 +35,13 @@ def parse_test_repository(text: str) -> dict[str, tuple[str, ...]]:
         names = (package, *dependencies)
         if not all(TEST_PACKAGE_RE.fullmatch(name) for name in names):
             raise RepositoryError(
-                f"строка {line_number}: имена должны состоять из больших латинских букв"
+                f"строка {line_number}: имена должны состоять "
+                "из больших латинских букв"
             )
         if package in repository:
-            raise RepositoryError(f"строка {line_number}: пакет {package} задан повторно")
+            raise RepositoryError(
+                f"строка {line_number}: пакет {package} задан повторно"
+            )
         repository[package] = dependencies
     return repository
 
@@ -95,7 +98,8 @@ def format_graph(graph: DependencyGraph) -> str:
     """Вывести граф построчно для демонстрации этапа 3."""
     lines = []
     for package, dependencies in graph.adjacency.items():
-        lines.append(f"{package}: {', '.join(dependencies) if dependencies else '<none>'}")
+        dependency_text = ", ".join(dependencies) if dependencies else "<none>"
+        lines.append(f"{package}: {dependency_text}")
     for source, target in graph.cycles:
         lines.append(f"cycle: {source} -> {target}")
     return "\n".join(lines)

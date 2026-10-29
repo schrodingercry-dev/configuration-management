@@ -23,7 +23,9 @@ PACKAGE_VERSION_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z.+:~\-]*$")
 
 def package_name(value: str) -> str:
     """Проверить имя пакета в формате Ubuntu/Debian."""
-    if not (PACKAGE_NAME_RE.fullmatch(value) or TEST_PACKAGE_RE.fullmatch(value)):
+    is_real_package = PACKAGE_NAME_RE.fullmatch(value)
+    is_test_package = TEST_PACKAGE_RE.fullmatch(value)
+    if not (is_real_package or is_test_package):
         raise argparse.ArgumentTypeError(
             "имя пакета должно начинаться со строчной буквы или цифры "
             "и содержать только a-z, 0-9, '+', '-' и '.'"
@@ -40,7 +42,10 @@ def validate_package_for_mode(
         parser.error(
             "в тестовом режиме пакет задаётся большими латинскими буквами"
             if test_mode
-            else "имя настоящего Ubuntu-пакета должно быть записано строчными буквами"
+            else (
+                "имя настоящего Ubuntu-пакета должно быть записано "
+                "строчными буквами"
+            )
         )
 
 
@@ -58,7 +63,8 @@ def non_negative_int(value: str) -> int:
     try:
         result = int(value)
     except ValueError as error:
-        raise argparse.ArgumentTypeError("глубина должна быть целым числом") from error
+        message = "глубина должна быть целым числом"
+        raise argparse.ArgumentTypeError(message) from error
     if result < 0:
         raise argparse.ArgumentTypeError("глубина не может быть отрицательной")
     return result
@@ -118,7 +124,8 @@ def validate_repository(
     parsed = urlparse(repository)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         parser.error(
-            "репозиторий должен быть корректным URL с протоколом http или https; "
+            "репозиторий должен быть корректным URL с протоколом "
+            "http или https; "
             "для файла укажите --test-mode"
         )
 
@@ -152,7 +159,11 @@ def main(argv: list[str] | None = None) -> int:
                 args.repository, args.package, args.version
             )
             find_package(records, args.package, args.version)
-            repository = records_to_repository(records, args.package, args.version)
+            repository = records_to_repository(
+                records,
+                args.package,
+                args.version,
+            )
         graph = build_dependency_graph(repository, args.package, args.max_depth)
     except RepositoryError as error:
         parser.error(str(error))

@@ -43,7 +43,10 @@ class GraphTests(unittest.TestCase):
     def test_load_order_places_dependencies_before_package(self) -> None:
         repository = parse_test_repository("A: B, C\nB: D\nC: D\nD:\n")
         graph = build_dependency_graph(repository, "A", 5)
-        self.assertEqual(dependency_load_order(graph, "A"), ("D", "B", "C", "A"))
+        self.assertEqual(
+            dependency_load_order(graph, "A"),
+            ("D", "B", "C", "A"),
+        )
 
     def test_load_order_handles_cycle_once(self) -> None:
         repository = parse_test_repository("A: B\nB: C\nC: A\n")
