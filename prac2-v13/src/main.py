@@ -1,4 +1,4 @@
-"""CLI-прототип визуализатора зависимостей пакетов (этап 1)."""
+"""CLI-визуализатор зависимостей пакетов."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ import argparse
 import re
 from pathlib import Path
 from urllib.parse import urlparse
+
+from .repository import RepositoryError, find_package, load_index_for_package
 
 
 PACKAGE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9+.-]*$")
@@ -45,7 +47,7 @@ def non_negative_int(value: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     """Создать парсер параметров командной строки."""
     parser = argparse.ArgumentParser(
-        description="Визуализатор графа зависимостей пакетов: этап 1"
+        description="Визуализатор графа зависимостей пакетов Ubuntu"
     )
     parser.add_argument(
         "--package",
@@ -115,11 +117,26 @@ def format_configuration(args: argparse.Namespace) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Разобрать, проверить и вывести параметры этапа 1."""
+    """Получить и вывести прямые зависимости пакета (этап 2)."""
     parser = build_parser()
     args = parser.parse_args(argv)
     validate_repository(parser, args.repository, args.test_mode)
-    print(format_configuration(args))
+    if args.test_mode:
+        parser.error("тестовый репозиторий будет поддержан на этапе 3")
+    try:
+        records, source_url = load_index_for_package(
+            args.repository, args.package, args.version
+        )
+        package = find_package(records, args.package, args.version)
+    except RepositoryError as error:
+        parser.error(str(error))
+
+    print(f"source: {source_url}")
+    if package.dependencies:
+        for dependency in package.dependencies:
+            print(f"dependency: {dependency}")
+    else:
+        print("dependency: <none>")
     return 0
 
 

@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from src.main import build_parser, format_configuration
+
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
@@ -23,8 +25,9 @@ def run_cli(*arguments: str) -> subprocess.CompletedProcess[str]:
 
 
 class CliTests(unittest.TestCase):
-    def test_prints_all_parameters_as_key_value_pairs(self) -> None:
-        result = run_cli(
+    def test_parser_keeps_all_stage1_parameters(self) -> None:
+        args = build_parser().parse_args(
+            [
             "--package",
             "curl",
             "--repository",
@@ -34,11 +37,11 @@ class CliTests(unittest.TestCase):
             "--ascii-tree",
             "--max-depth",
             "3",
+            ]
         )
 
-        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(
-            result.stdout.splitlines(),
+            format_configuration(args).splitlines(),
             [
                 "package: curl",
                 "repository: https://archive.ubuntu.com/ubuntu",
@@ -49,7 +52,7 @@ class CliTests(unittest.TestCase):
             ],
         )
 
-    def test_accepts_existing_test_repository_file(self) -> None:
+    def test_stage2_reports_that_test_mode_belongs_to_stage3(self) -> None:
         with tempfile.NamedTemporaryFile() as repository:
             result = run_cli(
                 "--package",
@@ -63,9 +66,8 @@ class CliTests(unittest.TestCase):
                 "0",
             )
 
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("test_mode: True", result.stdout)
-        self.assertIn("ascii_tree: False", result.stdout)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("этапе 3", result.stderr)
 
     def test_rejects_missing_required_parameter(self) -> None:
         result = run_cli()
