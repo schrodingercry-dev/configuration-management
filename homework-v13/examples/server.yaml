@@ -1,0 +1,7 @@
+server:
+  port: 8080.0
+  workers: 6.0
+limits:
+  - 128.0
+  - 256.0
+  - 512.0
