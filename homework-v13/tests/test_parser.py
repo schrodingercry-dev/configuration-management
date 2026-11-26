@@ -38,6 +38,29 @@ class ParserTests(unittest.TestCase):
     def test_evaluates_nested_expression(self) -> None:
         self.assertEqual(parse(".[sqrt .[+ 7 2].]."), 3.0)
 
+    def test_covers_every_construct_in_nested_positions(self) -> None:
+        source = """
+        NB. Составная константа проверяет вложенные значения
+        stored: (list 1.0 { nested: (list 2.0); })
+        base: 4.0
+        {
+          mixed: (list
+            { value: .[+ base 1].; }
+            (list .[sqrt 9].)
+          );
+          empty_list: (list);
+          empty_dictionary: {};
+        }
+        """
+        self.assertEqual(
+            parse(source),
+            {
+                "mixed": [{"value": 5.0}, [3.0]],
+                "empty_list": [],
+                "empty_dictionary": {},
+            },
+        )
+
     def test_rejects_integer_as_regular_value(self) -> None:
         with self.assertRaisesRegex(ConfigurationError, "дробную часть"):
             parse("{ value: 1; }")
@@ -50,6 +73,10 @@ class ParserTests(unittest.TestCase):
         with self.assertRaisesRegex(ConfigurationError, "повторно"):
             parse("{ value: 1.0; value: 2.0; }")
 
+    def test_rejects_duplicate_constant(self) -> None:
+        with self.assertRaisesRegex(ConfigurationError, "повторно"):
+            parse("value: 1.0 value: 2.0 { result: 3.0; }")
+
     def test_rejects_unknown_constant(self) -> None:
         with self.assertRaisesRegex(ConfigurationError, "неизвестная"):
             parse(".[+ missing 1].")
@@ -61,6 +88,14 @@ class ParserTests(unittest.TestCase):
     def test_rejects_empty_max(self) -> None:
         with self.assertRaisesRegex(ConfigurationError, "хотя бы один"):
             parse(".[max].")
+
+    def test_rejects_unknown_operation(self) -> None:
+        with self.assertRaisesRegex(ConfigurationError, "неизвестная операция"):
+            parse(".[minimum 1.0 2.0].")
+
+    def test_rejects_wrong_addition_arity(self) -> None:
+        with self.assertRaisesRegex(ConfigurationError, "два аргумента"):
+            parse(".[+ 1.0].")
 
 
 if __name__ == "__main__":

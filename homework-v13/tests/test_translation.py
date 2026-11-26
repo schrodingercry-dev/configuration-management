@@ -90,6 +90,29 @@ class TranslationTests(unittest.TestCase):
             self.assertIn("строка 1", result.stderr)
             self.assertFalse(output.exists())
 
+    def test_cli_reports_missing_input_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "output.yaml"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "src.main",
+                    "--input",
+                    str(root / "missing.conf"),
+                    "--output",
+                    str(output),
+                ],
+                cwd=PROJECT_DIR,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("file error", result.stderr)
+            self.assertFalse(output.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
