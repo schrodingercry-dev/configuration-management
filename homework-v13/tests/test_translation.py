@@ -65,6 +65,29 @@ class TranslationTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(output.read_text(), "value: 1.5\n")
 
+    def test_direct_main_file_launch_writes_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "input.conf"
+            output = root / "output.yaml"
+            source.write_text("{ value: 2.5; }", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PROJECT_DIR / "src" / "main.py"),
+                    "--input",
+                    str(source),
+                    "--output",
+                    str(output),
+                ],
+                cwd=PROJECT_DIR,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(output.read_text(), "value: 2.5\n")
+
     def test_cli_reports_syntax_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

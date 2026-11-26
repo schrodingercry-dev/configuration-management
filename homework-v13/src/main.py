@@ -6,9 +6,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from .errors import ConfigurationError
-from .parser import parse
-from .yaml_writer import dump_yaml
+if __package__ in {None, ""}:
+    project_root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(project_root))
+
+from src.errors import ConfigurationError
+from src.parser import parse
+from src.yaml_writer import dump_yaml
 
 
 def build_parser() -> argparse.ArgumentParser:
