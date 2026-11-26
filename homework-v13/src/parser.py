@@ -9,6 +9,9 @@ from .errors import ConfigurationError
 from .lexer import Token, tokenize
 
 
+ADDITION_ARGUMENT_COUNT = 2
+
+
 class Parser:
     """Рекурсивный нисходящий парсер учебного языка."""
 
@@ -173,7 +176,7 @@ class Parser:
     ) -> float:
         """Выполнить разрешённую операцию времени трансляции."""
         if operation == "+":
-            if len(arguments) != 2:
+            if len(arguments) != ADDITION_ARGUMENT_COUNT:
                 self.fail("сложение требует два аргумента", token)
             return arguments[0] + arguments[1]
         if operation == "sqrt":

@@ -33,78 +33,87 @@ SYMBOLS = {
 }
 
 
-def tokenize(source: str) -> list[Token]:
-    """Преобразовать исходный текст в последовательность токенов."""
-    tokens: list[Token] = []
-    index = 0
-    line = 1
-    column = 1
+class Lexer:
+    """Последовательно преобразовывать исходный текст в токены."""
 
-    def advance(text: str) -> None:
-        nonlocal line, column
+    def __init__(self, source: str) -> None:
+        self.source = source
+        self.tokens: list[Token] = []
+        self.index = 0
+        self.line = 1
+        self.column = 1
+
+    def advance(self, text: str) -> None:
+        """Сдвинуть текущую позицию с учётом переводов строк."""
         newline_count = text.count("\n")
         if newline_count:
-            line += newline_count
-            column = len(text.rsplit("\n", 1)[-1]) + 1
+            self.line += newline_count
+            self.column = len(text.rsplit("\n", 1)[-1]) + 1
         else:
-            column += len(text)
+            self.column += len(text)
 
-    while index < len(source):
-        if source.startswith("NB.", index):
-            end = source.find("\n", index)
-            if end == -1:
-                end = len(source)
-            comment = source[index:end]
-            advance(comment)
-            index = end
-            continue
+    def add_token(self, kind: str, value: str) -> None:
+        """Добавить токен и перейти к следующему фрагменту."""
+        self.tokens.append(Token(kind, value, self.line, self.column))
+        self.advance(value)
+        self.index += len(value)
 
-        if source.startswith(".[", index):
-            tokens.append(Token("EXPR_START", ".[", line, column))
-            advance(".[")
-            index += 2
-            continue
+    def skip_comment(self) -> None:
+        """Пропустить комментарий от ``NB.`` до конца строки."""
+        end = self.source.find("\n", self.index)
+        if end == -1:
+            end = len(self.source)
+        comment = self.source[self.index:end]
+        self.advance(comment)
+        self.index = end
 
-        if source.startswith("].", index):
-            tokens.append(Token("EXPR_END", "].", line, column))
-            advance("].")
-            index += 2
-            continue
+    def match_pattern(self, pattern: re.Pattern[str], kind: str) -> bool:
+        """Добавить токен, если регулярное выражение совпало."""
+        match = pattern.match(self.source, self.index)
+        if match is None:
+            return False
+        self.add_token(kind, match.group())
+        return True
 
-        character = source[index]
+    def scan_token(self) -> None:
+        """Распознать один токен или пропустить служебный текст."""
+        if self.source.startswith("NB.", self.index):
+            self.skip_comment()
+            return
+        delimiters = ((".[", "EXPR_START"), ('].', "EXPR_END"))
+        for value, kind in delimiters:
+            if self.source.startswith(value, self.index):
+                self.add_token(kind, value)
+                return
+
+        character = self.source[self.index]
         if character.isspace():
-            advance(character)
-            index += 1
-            continue
-
-        number_match = NUMBER_RE.match(source, index)
-        if number_match:
-            value = number_match.group()
-            tokens.append(Token("NUMBER", value, line, column))
-            advance(value)
-            index = number_match.end()
-            continue
-
-        name_match = NAME_RE.match(source, index)
-        if name_match:
-            value = name_match.group()
-            tokens.append(Token("NAME", value, line, column))
-            advance(value)
-            index = name_match.end()
-            continue
+            self.advance(character)
+            self.index += 1
+            return
+        if self.match_pattern(NUMBER_RE, "NUMBER"):
+            return
+        if self.match_pattern(NAME_RE, "NAME"):
+            return
 
         kind = SYMBOLS.get(character)
         if kind:
-            tokens.append(Token(kind, character, line, column))
-            advance(character)
-            index += 1
-            continue
-
+            self.add_token(kind, character)
+            return
         raise ConfigurationError(
             f"недопустимый символ {character!r}",
-            line,
-            column,
+            self.line,
+            self.column,
         )
 
-    tokens.append(Token("EOF", "", line, column))
-    return tokens
+    def tokenize(self) -> list[Token]:
+        """Преобразовать весь исходный текст в токены."""
+        while self.index < len(self.source):
+            self.scan_token()
+        self.tokens.append(Token("EOF", "", self.line, self.column))
+        return self.tokens
+
+
+def tokenize(source: str) -> list[Token]:
+    """Преобразовать исходный текст в последовательность токенов."""
+    return Lexer(source).tokenize()
